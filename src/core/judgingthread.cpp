@@ -7,6 +7,12 @@
  *
  */
 
+#define selfEval_password "123456"
+#include <typeinfo>
+#ifndef Q_OS_LINUX
+#error Only Linux supported.
+#endif
+
 #include "judgingthread.h"
 #include "base/LemonLog.hpp"
 #include "base/settings.h"
@@ -1086,6 +1092,16 @@ void JudgingThread::runProgram() {
 #endif
 }
 
+std::string randomToken() {
+  std::random_device rd;
+  std::mt19937 rng(rd());
+  std::string Tk = "";
+  for (int i = 0; i <= 20; ++i) {
+    Tk += "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"[std::uniform_int_distribution<>(0, 61)(rng)];
+  }
+  return Tk;
+}
+
 void JudgingThread::judgeOutput() {
 	QString fileName;
 
@@ -1094,6 +1110,31 @@ void JudgingThread::judgeOutput() {
 	} else {
 		fileName = workingDirectory + task->getOutputFileName();
 	}
+
+  QString oldinput, oldoutput;
+  std::string outtmp, intmp;
+
+  {
+    std::string tmpDir = randomToken();
+    oldoutput = outputFile;
+    auto pth = (QFileInfo(outputFile).absoluteFilePath()).toStdString();
+    system(("mkdir /tmp/" + tmpDir).c_str());
+    system(("unzip -q -P " + std::string(selfEval_password) + " " + pth + " -d /tmp/" + tmpDir).c_str());
+    system(("mv /tmp/" + tmpDir + "/* /tmp/" + tmpDir + "/tmpfile.ans").c_str());
+    outputFile = QString::fromStdString("/tmp/" + tmpDir + "/tmpfile.ans");
+    outtmp = tmpDir;
+  }
+
+  {
+    std::string tmpDir = randomToken();
+    oldinput = inputFile;
+    auto pth = (QFileInfo(inputFile).absoluteFilePath()).toStdString();
+    system(("mkdir /tmp/" + tmpDir).c_str());
+    system(("unzip -q -P " + std::string(selfEval_password) + " " + pth + " -d /tmp/" + tmpDir).c_str());
+    system(("mv /tmp/" + tmpDir + "/* /tmp/" + tmpDir + "/tmpfile.in").c_str());
+    inputFile = QString::fromStdString("/tmp/" + tmpDir + "/tmpfile.in");
+    intmp = tmpDir;
+  }
 
 	switch (task->getComparisonMode()) {
 		case Task::LineByLineMode:
@@ -1116,6 +1157,14 @@ void JudgingThread::judgeOutput() {
 			specialJudge(fileName);
 			break;
 	}
+
+
+  outputFile = oldoutput;
+  system(("rm -r /tmp/" + outtmp).c_str());
+  inputFile = oldinput;
+  system(("rm -r /tmp/" + intmp).c_str());
+
+
 }
 
 void JudgingThread::judgeTraditionalTask() {
@@ -1133,7 +1182,45 @@ void JudgingThread::judgeTraditionalTask() {
 			message = tr("Cannot copy standard input file");
 			return;
 		}
+
+
+    auto inputFILE__ = (workingDirectory + task->getInputFileName()).toStdString();
+    if (!(inputFILE__.size() >= 3u && inputFILE__.substr(inputFILE__.size() - 3) == ".in" && inputFILE__.find('/') != inputFILE__.npos)) {
+			score = 0;
+			result = FileError;
+			message = tr("selfEval error: Please use name.in as input file");
+			return;
+    }
+    auto zipFILE__ = inputFILE__.substr(0, inputFILE__.size() - 3) + ".zip";
+    auto DIR__ = inputFILE__;
+    while (DIR__.back() != '/') {
+      DIR__.pop_back();
+    }
+    if (system(("mv " + inputFILE__ + ' ' + zipFILE__ + ";").c_str())) {
+			score = 0;
+			result = FileError;
+			message = tr("selfEval error: Unzipping failed.");
+			return;
+    }
+    if (system(("unzip -q -P " + std::string(selfEval_password) + " " + zipFILE__ + " -d " + DIR__).c_str())) {
+			score = 0;
+			result = FileError;
+			message = tr("selfEval error: Unzipping failed.");
+			return;
+    }
+    if (system(("rm " + zipFILE__).c_str())) {
+			score = 0;
+			result = FileError;
+			message = tr("selfEval error: Unzipping failed.");
+			return;
+    } 
 	}
+  if (task->getStandardInputCheck() || task->getStandardOutputCheck()) {
+    score = 0;
+    result = FileError;
+    message = tr("selfEval error: Please use File IO.");
+    return;    
+  }
 
 	auto cleanupTempFiles = qScopeGuard([&] {
 		if (! task->getStandardInputCheck()) {
