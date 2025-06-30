@@ -30,6 +30,7 @@
 *.exe
 *.out
 *.app
+*.AppImage
 
 # Qt
 moc_*.cpp
@@ -69,3 +70,6 @@ build-debug/
 .idea/
 cmake-build-debug/
 
+# AppImage
+LemonLime-x86_64.AppImage
+linuxdeployqt-continuous-x86_64.AppImage
