@@ -63,7 +63,7 @@ lemon-*-Linux.sh
 lemon-*-Linux.tar.Z
 lemon-*-Linux.tar.gz
 rules.ninja
-watcher.qrc
+./watcher.qrc
 compile_commands.json
 
 # KDevelop
