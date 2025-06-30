@@ -171,11 +171,13 @@ void DetailDialog::refreshViewer(Contest *_contest, Contestant *_contestant) {
 				        .arg(frColor);
 
 				if (! message[j][k].isEmpty()) {
-					htmlCode +=
-					    QString(R"(<a href="Message %1 %2 %3" style="text-decoration: none"> (...)</a>)")
-					        .arg(i)
-					        .arg(j)
-					        .arg(k);
+					if(! (taskList[i]->getTaskType() != Task::Interaction && result[j][k] == WrongAnswer)) {
+						htmlCode +=
+							QString(R"(<a href="Message %1 %2 %3" style="text-decoration: none"> (...)</a>)")
+								.arg(i)
+								.arg(j)
+								.arg(k);
+					}
 				}
 
 				htmlCode += "</td>";

@@ -99,11 +99,11 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	resize(_size);
 
 	autoSaveTimer.callOnTimeout([this]() {
-		if (curContest)
-			saveAction();
+		// if (curContest)
+		// 	saveAction();
 	});
 	using namespace std::chrono_literals;
-	autoSaveTimer.start(30s);
+	// autoSaveTimer.start(30s);
 }
 
 LemonLime::~LemonLime() {
@@ -511,6 +511,8 @@ void LemonLime::cleanupButtonClicked() {
 }
 
 void LemonLime::tabIndexChanged(int index) {
+	// std::cerr << "tabIndexChanged " << index << '\n';
+	// return ;
 	if (index != 1) {
 		judgeExtButtonFlip(false);
 		ui->judgeAction->setEnabled(false);
@@ -602,15 +604,15 @@ void LemonLime::saveContest(const QString &fileName) {
 	if (! file.open(QFile::WriteOnly)) {
 		QMessageBox::warning(this, tr("Error"), tr("Cannot open file %1").arg(fileName), QMessageBox::Close);
 		ui->statusBar->showMessage(tr("Save Failed"), 1000);
-		WARN(fileName, "Save Failed");
 		return;
 	}
 
 	QApplication::setOverrideCursor(Qt::WaitCursor);
-	QJsonObject out;
-	curContest->writeToJson(out);
-	file.write(QJsonDocument(out).toJson(QJsonDocument::Compact));
-	/* QByteArray data;
+	// QJsonObject out;
+	// curContest->writeToJson(out);
+	// file.write(QJsonDocument(out).toJson(QJsonDocument::Compact));
+	
+	QByteArray data;
 	QDataStream _out(&data, QIODevice::WriteOnly);
 	curContest->writeToStream(_out);
 	data = qCompress(data);
@@ -621,7 +623,7 @@ void LemonLime::saveContest(const QString &fileName) {
 #else
 	out << unsigned(MagicNumber) << qChecksum(data.data(), static_cast<uint>(data.length())) << data.length();
 #endif
-	out.writeRawData(data.data(), data.length()); */
+	out.writeRawData(data.data(), data.length()); 
 	QApplication::restoreOverrideCursor();
 	ui->statusBar->showMessage(tr("Saved"), 1000);
 }
@@ -643,30 +645,32 @@ void LemonLime::loadContest(const QString &filePath) {
 	file.peek(&firstChar, 1);
 	// Don't support RFC 7159, but support RFC 4627
 	if (firstChar == '[' || firstChar == '{') {
-		QJsonParseError parseError;
-		QJsonObject inObj(QJsonDocument::fromJson(file.readAll(), &parseError).object());
-		if (parseError.error != 0) {
-			QMessageBox::warning(this, tr("Error"),
-			                     tr("File %1 is broken").arg(QFileInfo(filePath).fileName()) + "\n" +
-			                         parseError.errorString() + "at position" +
-			                         QString("%1").arg(parseError.offset),
-			                     QMessageBox::Close);
-			return;
-		}
-		QApplication::setOverrideCursor(Qt::WaitCursor);
-		curContest->setSettings(settings);
-		if (curContest->readFromJson(inObj) == -1) {
-			QMessageBox::warning(this, tr("Error"),
-			                     tr("File %1 is broken").arg(QFileInfo(filePath).fileName()),
-			                     QMessageBox::Close);
-			QApplication::restoreOverrideCursor();
-			return;
-		}
+		// QJsonParseError parseError;
+		// QJsonObject inObj(QJsonDocument::fromJson(file.readAll(), &parseError).object());
+		// if (parseError.error != 0) {
+		// 	QMessageBox::warning(this, tr("Error"),
+		// 	                     tr("File %1 is broken").arg(QFileInfo(filePath).fileName()) + "\n" +
+		// 	                         parseError.errorString() + "at position" +
+		// 	                         QString("%1").arg(parseError.offset),
+		// 	                     QMessageBox::Close);
+		// 	return;
+		// }
+		// QApplication::setOverrideCursor(Qt::WaitCursor);
+		// curContest->setSettings(settings);
+		// if (curContest->readFromJson(inObj) == -1) {
+		// 	QMessageBox::warning(this, tr("Error"),
+		// 	                     tr("File %1 is broken").arg(QFileInfo(filePath).fileName()),
+		// 	                     QMessageBox::Close);
+		// 	QApplication::restoreOverrideCursor();
+		// 	return;
+		// }
+		return ;
 	} else {
 		QDataStream _in(&file);
 		unsigned checkNumber = 0;
 		_in >> checkNumber;
 
+		std::cerr << checkNumber << " " << MagicNumber << " ; " << (checkNumber == MagicNumber) << "\n";
 		if (checkNumber != unsigned(MagicNumber)) {
 			QMessageBox::warning(this, tr("Error"),
 			                     tr("File %1 is broken").arg(QFileInfo(filePath).fileName()),
@@ -715,16 +719,19 @@ void LemonLime::loadContest(const QString &filePath) {
 	ui->closeAction->setEnabled(true);
 	ui->openFolderAction->setEnabled(true);
 	ui->saveAction->setEnabled(true);
-	ui->addTasksAction->setEnabled(true);
-	ui->exportAction->setEnabled(true);
-	ui->actionExportStatistics->setEnabled(true);
+	ui->addTasksAction->setEnabled(false/*true*/);
+	ui->exportAction->setEnabled(false/*true*/);
+	ui->actionExportStatistics->setEnabled(false/*true*/);
 	ui->actionChangeContestName->setEnabled(true);
 	ui->cleanupAction->setEnabled(false);
 	ui->refreshAction->setEnabled(false);
-	setWindowTitle(tr("LemonLime - %1").arg(curContest->getContestTitle()));
-	ui->tabWidget->setCurrentIndex(0);
+	setWindowTitle(tr("LemonLime selfEval - %1").arg(curContest->getContestTitle()));
+	ui->tabWidget->setCurrentIndex(1);
+	// std::cerr << ui->tabWidget->count() << "\n";
+	for (int i = 0; i < ui->tabWidget->count(); ++i) {
+		if(i != 1)ui->tabWidget->setTabEnabled(i, false); // 禁用其他标签页
+	}
 	QApplication::restoreOverrideCursor();
-	LOG("Contest -", curContest->getContestTitle(), "loaded successfully");
 }
 
 void LemonLime::newContest(const QString &title, const QString &savingName, const QString &path) {
@@ -739,7 +746,7 @@ void LemonLime::newContest(const QString &title, const QString &savingName, cons
 	curContest = new Contest(this);
 	curContest->setSettings(settings);
 	curContest->setContestTitle(title);
-	setWindowTitle(tr("LemonLime - %1").arg(title));
+	setWindowTitle(tr("LemonLime selfEval - %1").arg(title));
 	QDir::setCurrent(path);
 	QDir().mkdir(Settings::dataPath());
 	QDir().mkdir(Settings::sourcePath());
@@ -755,17 +762,19 @@ void LemonLime::newContest(const QString &title, const QString &savingName, cons
 	ui->closeAction->setEnabled(true);
 	ui->openFolderAction->setEnabled(true);
 	ui->saveAction->setEnabled(true);
-	ui->addTasksAction->setEnabled(true);
-	ui->exportAction->setEnabled(true);
-	ui->actionExportStatistics->setEnabled(true);
+	ui->addTasksAction->setEnabled(false/*true*/);
+	ui->exportAction->setEnabled(false/*true*/);
+	ui->actionExportStatistics->setEnabled(false/*true*/);
 	ui->actionChangeContestName->setEnabled(true);
 	ui->cleanupAction->setEnabled(false);
 	ui->refreshAction->setEnabled(false);
 	QStringList recentContest = settings->getRecentContest();
 	recentContest.append(QDir::toNativeSeparators((QDir().absoluteFilePath(curFile))));
 	settings->setRecentContest(recentContest);
-	ui->tabWidget->setCurrentIndex(0);
-	LOG("New Contest -", title);
+	ui->tabWidget->setCurrentIndex(1);
+	for (int i = 0; i < ui->tabWidget->count(); ++i) {
+		if(i != 1)ui->tabWidget->setTabEnabled(i, false); // 禁用其他标签页
+	}
 }
 
 void LemonLime::newAction() {
@@ -797,7 +806,7 @@ void LemonLime::closeAction() {
 	ui->actionChangeContestName->setEnabled(false);
 	ui->cleanupAction->setEnabled(false);
 	ui->refreshAction->setEnabled(false);
-	setWindowTitle(tr("LemonLime"));
+	setWindowTitle(tr("LemonLime selfEval"));
 }
 
 void LemonLime::saveAction() { saveContest(curFile); }
@@ -993,7 +1002,7 @@ void LemonLime::changeContestName() {
 	}
 
 	curContest->setContestTitle(newName);
-	setWindowTitle(tr("LemonLime - %1").arg(curContest->getContestTitle()));
+	setWindowTitle(tr("LemonLime selfEval - %1").arg(curContest->getContestTitle()));
 	ui->resultViewer->refreshViewer();
 	ui->statisticsBrowser->refresh();
 	saveContest(curFile);
@@ -1001,7 +1010,7 @@ void LemonLime::changeContestName() {
 
 void LemonLime::aboutLemon() {
 	QString text;
-	text += "<h2>Project LemonLime</h2>";
+	text += "<h2>Project LemonLime selfEval</h2>";
 	text += "<h3>" +
 	        tr("Version: %1")
 	            .arg(QString(LEMON_VERSION_STRING) + QString(":") + QString::number(LEMON_VERSION_BUILD)) +
@@ -1009,14 +1018,16 @@ void LemonLime::aboutLemon() {
 	text += tr("This is a tiny judging environment for OI contest based on Project LemonPlus.") + "<br>";
 	text += tr("Based on Project Lemon version 1.2 Beta by Zhipeng Jia, 2011") + "<br>";
 	text += tr("Based on Project LemonPlus by Dust1404, 2019") + "<br>";
-	text += tr("Update by iotang and Coelacanthus") + "<br><br>";
+	text += tr("Based on Project LemonLime by iotang and Coelacanthus, 2019-2022") + "<br>";
+	text += tr("Based on Project LemonLime selfEval by 0x3b800001, 2024") + "<br>";
+	text += tr("Update by 369Pai and caijiMK") + "<br><br>";
 	text += tr("Build Info: %1").arg(QString(LEMON_BUILD_INFO_STR)) + "<br>";
 	text += tr("Build Extra Info: %1").arg(QString(LEMON_BUILD_EXTRA_INFO_STR)) + "<br>";
 	text += tr("Build Date: %1").arg(QString(__DATE__) + QString(", ") + QString(__TIME__)) + "<br>";
 	text += tr("This program is under the <a href=\"http://www.gnu.org/licenses/gpl-3.0.html\">GPLv3</a> "
 	           "license") +
 	        "<br>";
-	QMessageBox::about(this, tr("About LemonLime"), text);
+	QMessageBox::about(this, tr("About LemonLime selfEval"), text);
 }
 
 void LemonLime::actionManual() {
