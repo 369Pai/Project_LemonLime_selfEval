@@ -26,6 +26,10 @@
 *.a
 *.lib
 
+# Translations
+translations.qrc
+*.qm
+
 # Executables
 *.exe
 *.out
@@ -58,6 +62,9 @@ install_manifest.txt
 lemon-*-Linux.sh
 lemon-*-Linux.tar.Z
 lemon-*-Linux.tar.gz
+rules.ninja
+watcher.qrc
+compile_commands.json
 
 # KDevelop
 .kdev4/
@@ -69,7 +76,3 @@ build/
 build-debug/
 .idea/
 cmake-build-debug/
-
-# AppImage
-LemonLime-x86_64.AppImage
-linuxdeployqt-continuous-x86_64.AppImage
