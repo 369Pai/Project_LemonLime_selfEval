@@ -17,7 +17,7 @@
 #include <QString>
 #include <QStringList>
 
-#define MagicNumber 0x20111127
+#define MagicNumber 0x20250712
 
 class Task;
 class Settings;
@@ -43,7 +43,8 @@ class Contest : public QObject {
 	void deleteTask(int);
 	void refreshContestantList();
 	void deleteContestant(const QString &);
-	void writeToJson(QJsonObject &);
+	// void writeToJson(QJsonObject &);
+	void writeToStream(QDataStream &);
 	void readFromStream(QDataStream &);
 	int readFromJson(const QJsonObject &);
 
@@ -71,7 +72,7 @@ class Contest : public QObject {
 	void taskDeletedForViewer(int);
 	void problemTitleChanged();
 	void dialogAlert(QString);
-	void singleCaseFinished(QString, int, int, int, int, int, int, int);
+	void singleCaseFinished(int, int, int, int, int, int, int);
 	void singleSubtaskDependenceFinished(int, int, int);
 	void taskJudgingStarted(QString);
 	void taskJudgingFinished();

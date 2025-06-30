@@ -94,8 +94,9 @@ class Task : public QObject {
 	void refreshCompilerConfiguration(Settings *);
 	int getTotalTimeLimit() const;
 	int getTotalScore() const;
-	int writeToJson(QJsonObject &in);
+	// int writeToJson(QJsonObject &in);
 	int readFromJson(const QJsonObject &);
+	void writeToStream(QDataStream &);
 	void readFromStream(QDataStream &);
 
   private:

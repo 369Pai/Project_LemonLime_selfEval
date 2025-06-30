@@ -9,7 +9,6 @@
 
 #include "contest.h"
 
-#include "base/LemonLog.hpp"
 #include "base/LemonUtils.hpp"
 #include "base/compiler.h"
 #include "base/settings.h"
@@ -26,8 +25,6 @@
 #include <QMessageBox>
 #include <algorithm>
 #include <utility>
-
-#define LEMON_MODULE_NAME "Contest"
 
 Contest::Contest(QObject *parent) : QObject(parent) {}
 
@@ -171,7 +168,6 @@ void Contest::clearPath(const QString &curDir) {
 }
 
 void Contest::judge(const QVector<std::pair<Contestant *, int>> &judgingTasks) {
-	LOG("Start Judging");
 	stopJudging = false;
 	controller = new JudgingController(settings);
 
@@ -207,7 +203,7 @@ void Contest::judge(const QVector<std::pair<Contestant *, int>> &judgingTasks) {
 	delete eventLoop;
 	delete controller;
 	controller = nullptr;
-	LOG("Judging Finished");
+	// emit contestantJudgingFinished();
 }
 
 void Contest::judge(const QList<std::pair<QString, QVector<int>>> &list) {
@@ -235,43 +231,49 @@ void Contest::stopJudgingSlot() {
 	QMetaObject::invokeMethod(controller, "stop");
 }
 
-void Contest::writeToJson(QJsonObject &out) {
-	QString version = "1.0";
+// void Contest::writeToJson(QJsonObject &out) {
+// 	WRITE_JSON(out, contestTitle);
 
-	WRITE_JSON(out, version);
+// 	QJsonArray tasks;
 
-	WRITE_JSON(out, contestTitle);
+// 	for (const auto &i : taskList) {
+// 		QJsonObject obj;
+// 		i->writeToJson(obj);
+// 		tasks.append(obj);
+// 	}
 
-	QJsonArray tasks;
+// 	WRITE_JSON(out, tasks);
 
-	for (const auto &i : taskList) {
-		QJsonObject obj;
-		i->writeToJson(obj);
-		tasks.append(obj);
+// 	QJsonArray contestants;
+
+// 	for (const auto &i : contestantList) {
+// 		QJsonObject obj;
+// 		i->writeToJson(obj);
+// 		contestants.append(obj);
+// 	}
+
+// 	WRITE_JSON(out, contestants);
+// }
+void Contest::writeToStream(QDataStream &out)
+{
+	out << contestTitle;
+	out << taskList.size();
+
+	for (auto &i : taskList)
+	{
+		i->writeToStream(out);
 	}
 
-	WRITE_JSON(out, tasks);
+	out << contestantList.size();
+	QList<Contestant *> list = contestantList.values();
 
-	QJsonArray contestants;
-
-	for (const auto &i : contestantList) {
-		QJsonObject obj;
-		i->writeToJson(obj);
-		contestants.append(obj);
+	for (auto &i : list)
+	{
+		i->writeToStream(out);
 	}
-
-	WRITE_JSON(out, contestants);
 }
+
 int Contest::readFromJson(const QJsonObject &in) {
-	QString version;
-
-	// If there's no version number, consider as version 1.0
-
-	if (READ_JSON(in, version) != -1) {
-		if (version != "1.0")
-			return -1;
-	}
-
 	READ_JSON(in, contestTitle);
 
 	QJsonArray tasks;

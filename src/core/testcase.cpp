@@ -101,30 +101,30 @@ void TestCase::deleteSingleCase(int index) {
 	outputFiles.removeAt(index);
 }
 
-int TestCase::writeToJson(QJsonObject &out) {
-	WRITE_JSON(out, fullScore);
-	WRITE_JSON(out, timeLimit);
-	WRITE_JSON(out, memoryLimit);
+// int TestCase::writeToJson(QJsonObject &out) {
+// 	WRITE_JSON(out, fullScore);
+// 	WRITE_JSON(out, timeLimit);
+// 	WRITE_JSON(out, memoryLimit);
 
-	QStringList inputFiles = this->inputFiles;
-	for (auto &filename : inputFiles) {
-		filename.replace(QDir::separator(), '/');
-	}
-	for (int i : qAsConst(dependenceSubtask)) {
-		inputFiles.push_back(QString("%1_lemon_SUbtaskDEPENDENCE_fLAg").arg(i));
-	}
+// 	QStringList inputFiles = this->inputFiles;
+// 	for (auto &filename : inputFiles) {
+// 		filename.replace(QDir::separator(), '/');
+// 	}
+// 	for (int i : qAsConst(dependenceSubtask)) {
+// 		inputFiles.push_back(QString("%1_lemon_SUbtaskDEPENDENCE_fLAg").arg(i));
+// 	}
 
-	WRITE_JSON(out, inputFiles);
+// 	WRITE_JSON(out, inputFiles);
 
-	QStringList outputFiles = this->outputFiles;
+// 	QStringList outputFiles = this->outputFiles;
 
-	for (auto &filename : inputFiles) {
-		filename.replace(QDir::separator(), '/');
-	}
+// 	for (auto &filename : inputFiles) {
+// 		filename.replace(QDir::separator(), '/');
+// 	}
 
-	WRITE_JSON(out, outputFiles);
-	return 0;
-}
+// 	WRITE_JSON(out, outputFiles);
+// 	return 0;
+// }
 
 int TestCase::readFromJson(const QJsonObject &in) {
 	READ_JSON(in, fullScore);
@@ -150,6 +150,35 @@ int TestCase::readFromJson(const QJsonObject &in) {
 	READ_JSON(in, outputFiles);
 	return 0;
 }
+
+void TestCase::writeToStream(QDataStream &out)
+{
+	out << fullScore;
+	out << timeLimit;
+	out << memoryLimit;
+	QStringList _inputFiles(inputFiles);
+
+	for (int i = 0; i < _inputFiles.size(); i++)
+	{
+		_inputFiles[i].replace(QDir::separator(), '/');
+	}
+
+	for (int i : qAsConst(dependenceSubtask))
+	{
+		_inputFiles.push_back(QString("%1_lemon_SUbtaskDEPENDENCE_fLAg").arg(i));
+	}
+
+	QStringList _outputFiles(outputFiles);
+
+	for (int i = 0; i < _outputFiles.size(); i++)
+	{
+		_outputFiles[i].replace(QDir::separator(), '/');
+	}
+
+	out << _inputFiles;
+	out << _outputFiles;
+}
+
 void TestCase::readFromStream(QDataStream &in) {
 	in >> fullScore;
 	in >> timeLimit;

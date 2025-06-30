@@ -49,8 +49,9 @@ class Contestant : public QObject {
 	void setMemoryUsed(int, const QList<QList<int>> &);
 	void setJudgingTime(QDateTime);
 
-	int writeToJson(QJsonObject &);
+	// int writeToJson(QJsonObject &);
 	int readFromJson(const QJsonObject &);
+	void writeToStream(QDataStream &);
 	void readFromStream(QDataStream &);
 
   private:

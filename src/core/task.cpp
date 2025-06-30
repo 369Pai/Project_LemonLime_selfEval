@@ -180,10 +180,18 @@ void Task::swapTestCase(int a, int b) {
 	qSwap(testCaseList[a], testCaseList[b]);
 }
 
-void Task::copyTo(Task *to) {
-	QJsonObject obj;
-	writeToJson(obj);
-	to->readFromJson(obj);
+// void Task::copyTo(Task *to) {
+// 	QJsonObject obj;
+// 	writeToJson(obj);
+// 	to->readFromJson(obj);
+// }
+void Task::copyTo(Task *to)
+{
+	QByteArray data;
+	QDataStream tmpin(&data, QIODevice::WriteOnly);
+	writeToStream(tmpin);
+	QDataStream tmpout(&data, QIODevice::ReadOnly);
+	to->readFromStream(tmpout);
 }
 
 void Task::refreshCompilerConfiguration(Settings *settings) {
@@ -238,74 +246,74 @@ auto Task::getTotalScore() const -> int {
 
 	return total;
 }
-int Task::writeToJson(QJsonObject &in) {
-	WRITE_JSON(in, problemTitle);
-	WRITE_JSON(in, sourceFileName);
-	WRITE_JSON(in, inputFileName);
-	WRITE_JSON(in, outputFileName);
-	WRITE_JSON(in, standardInputCheck);
-	WRITE_JSON(in, standardOutputCheck);
-	WRITE_JSON(in, taskType);
-	WRITE_JSON(in, subFolderCheck);
-	WRITE_JSON(in, comparisonMode);
-	WRITE_JSON(in, diffArguments);
-	WRITE_JSON(in, realPrecision);
-	auto specialJudge = this->specialJudge;
-	specialJudge.replace(QDir::separator(), '/');
-	WRITE_JSON(in, specialJudge);
-	if (taskType == Task::Interaction) {
-		auto interactor = this->interactor;
-		interactor.replace(QDir::separator(), '/');
-		WRITE_JSON(in, interactor);
-		auto grader = this->grader;
-		grader.replace(QDir::separator(), '/');
-		WRITE_JSON(in, grader);
-		WRITE_JSON(in, interactorName);
-	}
+// int Task::writeToJson(QJsonObject &in) {
+// 	WRITE_JSON(in, problemTitle);
+// 	WRITE_JSON(in, sourceFileName);
+// 	WRITE_JSON(in, inputFileName);
+// 	WRITE_JSON(in, outputFileName);
+// 	WRITE_JSON(in, standardInputCheck);
+// 	WRITE_JSON(in, standardOutputCheck);
+// 	WRITE_JSON(in, taskType);
+// 	WRITE_JSON(in, subFolderCheck);
+// 	WRITE_JSON(in, comparisonMode);
+// 	WRITE_JSON(in, diffArguments);
+// 	WRITE_JSON(in, realPrecision);
+// 	auto specialJudge = this->specialJudge;
+// 	specialJudge.replace(QDir::separator(), '/');
+// 	WRITE_JSON(in, specialJudge);
+// 	if (taskType == Task::Interaction) {
+// 		auto interactor = this->interactor;
+// 		interactor.replace(QDir::separator(), '/');
+// 		WRITE_JSON(in, interactor);
+// 		auto grader = this->grader;
+// 		grader.replace(QDir::separator(), '/');
+// 		WRITE_JSON(in, grader);
+// 		WRITE_JSON(in, interactorName);
+// 	}
 
-	if (taskType == Task::Communication || taskType == Task::CommunicationExec) {
-		auto sourceFilesPath = this->sourceFilesPath;
-		auto sourceFilesName = this->sourceFilesName;
-		for (auto &filePath : sourceFilesPath) {
-			filePath.replace(QDir::separator(), '/');
-		}
-		for (auto &fileName : sourceFilesName) {
-			fileName.replace(QDir::separator(), '/');
-		}
-		WRITE_JSON(in, sourceFilesPath);
-		WRITE_JSON(in, sourceFilesName);
+// 	if (taskType == Task::Communication || taskType == Task::CommunicationExec) {
+// 		auto sourceFilesPath = this->sourceFilesPath;
+// 		auto sourceFilesName = this->sourceFilesName;
+// 		for (auto &filePath : sourceFilesPath) {
+// 			filePath.replace(QDir::separator(), '/');
+// 		}
+// 		for (auto &fileName : sourceFilesName) {
+// 			fileName.replace(QDir::separator(), '/');
+// 		}
+// 		WRITE_JSON(in, sourceFilesPath);
+// 		WRITE_JSON(in, sourceFilesName);
 
-		auto graderFilesPath = this->graderFilesPath;
-		auto graderFilesName = this->graderFilesName;
-		for (auto &filePath : graderFilesPath) {
-			filePath.replace(QDir::separator(), '/');
-		}
-		for (auto &fileName : graderFilesName) {
-			fileName.replace(QDir::separator(), '/');
-		}
-		WRITE_JSON(in, graderFilesPath);
-		WRITE_JSON(in, graderFilesName);
-	}
+// 		auto graderFilesPath = this->graderFilesPath;
+// 		auto graderFilesName = this->graderFilesName;
+// 		for (auto &filePath : graderFilesPath) {
+// 			filePath.replace(QDir::separator(), '/');
+// 		}
+// 		for (auto &fileName : graderFilesName) {
+// 			fileName.replace(QDir::separator(), '/');
+// 		}
+// 		WRITE_JSON(in, graderFilesPath);
+// 		WRITE_JSON(in, graderFilesName);
+// 	}
 
-	QJsonObject compilerConfiguration;
-	for (auto [x, y] : this->compilerConfiguration.toStdMap()) {
-		compilerConfiguration[x] = y;
-	}
-	WRITE_JSON(in, compilerConfiguration);
+// 	QJsonObject compilerConfiguration;
+// 	for (auto [x, y] : this->compilerConfiguration.toStdMap()) {
+// 		compilerConfiguration[x] = y;
+// 	}
+// 	WRITE_JSON(in, compilerConfiguration);
 
-	WRITE_JSON(in, answerFileExtension);
+// 	WRITE_JSON(in, answerFileExtension);
 
-	QJsonArray testCases;
+// 	QJsonArray testCases;
 
-	for (const auto &i : testCaseList) {
-		QJsonObject obj;
-		i->writeToJson(obj);
-		testCases.append(obj);
-	}
+// 	for (const auto &i : testCaseList) {
+// 		QJsonObject obj;
+// 		i->writeToJson(obj);
+// 		testCases.append(obj);
+// 	}
 
-	WRITE_JSON(in, testCases);
-	return 0;
-}
+// 	WRITE_JSON(in, testCases);
+// 	return 0;
+// }
 
 int Task::readFromJson(const QJsonObject &in) {
 	READ_JSON(in, problemTitle);
@@ -378,6 +386,70 @@ int Task::readFromJson(const QJsonObject &in) {
 	}
 
 	return 0;
+}
+
+void Task::writeToStream(QDataStream &out)
+{
+	out << problemTitle;
+	out << sourceFileName;
+	out << inputFileName;
+	out << outputFileName;
+	out << standardInputCheck;
+	out << standardOutputCheck;
+	out << (static_cast<int>(taskType) | ((static_cast<int>(subFolderCheck)) << 8));
+	out << int(comparisonMode);
+	out << diffArguments;
+	out << realPrecision;
+	QString _specialJudge = specialJudge;
+	_specialJudge.replace(QDir::separator(), '/');
+	out << _specialJudge;
+
+	if (taskType == Task::Interaction)
+	{
+		QString _temp = interactor;
+		_temp.replace(QDir::separator(), '/');
+		out << _temp;
+		_temp = grader;
+		_temp.replace(QDir::separator(), '/');
+		out << _temp;
+		out << interactorName;
+	}
+
+	if (taskType == Task::Communication)
+	{
+		out << sourceFilesPath.length();
+
+		for (int i = 0; i < sourceFilesPath.length(); i++)
+		{
+			QString temp = sourceFilesPath[i];
+			temp.replace(QDir::separator(), '/');
+			out << temp;
+			temp = sourceFilesName[i];
+			temp.replace(QDir::separator(), '/');
+			out << temp;
+		}
+
+		out << graderFilesPath.length();
+
+		for (int i = 0; i < graderFilesPath.length(); i++)
+		{
+			QString temp = graderFilesPath[i];
+			temp.replace(QDir::separator(), '/');
+			out << temp;
+			temp = graderFilesName[i];
+			temp.replace(QDir::separator(), '/');
+			out << temp;
+		}
+	}
+
+	out << compilerConfiguration;
+	out << answerFileExtension;
+	out << testCaseList.size();
+
+	for (auto &i : testCaseList)
+	{
+		i->writeToStream(out);
+	}
 }
 
 void Task::readFromStream(QDataStream &in) {
